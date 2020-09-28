@@ -8,10 +8,7 @@ const config = JSON.parse(configFile);
 
 // start the HTTP server
 const http2 = require('http2');
-const server = http2.createSecureServer({
-    "key":fs.readFileSync('localhost-private.pem'),
-    "cert":fs.readFileSync('localhost-cert.pem'),
-})
+const server = http2.createServer()
 
 // start socket.io using the server port
 const PORT = process.env.PORT || config.PORT;
