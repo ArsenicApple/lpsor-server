@@ -8,23 +8,16 @@ module.exports.initialize = function initialize(conf)
 async function mongoCollectionQueryAsync(data,collectionName,callbackFuncAsync){
     var mongoUri = config.DBUri;
     const MongoClient = require('mongodb').MongoClient;
-    const client = new MongoClient(mongoUri,config.DBOptions);
+    
+    MongoClient.connect(mongoUri,async function(err, mongodb) {
+        if (err) throw err;
 
-    let result = false;
-
-    try{
-        await client.connect();
-        const db = client.db(config.DatabaseName);
+        var db = mongodb.db(config.DatabaseName);
         const collection = db.collection(collectionName);
         result = await callbackFuncAsync(data,collection);
-    }
-    catch(exception){
-        console.error(`Error in query: ${exception}`);
-    }
-    finally{
-        client.close();
-        return result;
-    }
+        
+        mongodb.close();
+    }); 
     
 }
 
@@ -85,7 +78,7 @@ module.exports.updatePlayer = function(data){
 }
 async function mongoUpdatePlayerAsync(data,collection){
     try{
-        var find = await collection.updateOne({'_id': data.userId},data);
+        var find = await collection.updateOne({'_id': data.userId},{$set:data});
     }
     catch(exception){
         console.error(`Error in updating player: ${exception}`);

@@ -23,10 +23,9 @@ module.exports = function manageSockets(config,socketio)
     // Wait for player connection to server (socket)
     io.on('connection',function(socket){ 
         console.log('A player awaiting authentication has connected to the server.');
-        var player = new Player(); // declares a new player class
 
         // User connecting with username and shortidKey
-        socket.on('userConnect',(userData)=> authenticateUser(socket,userData))
+        socket.on('userConnect',(userData)=> authenticateUser(socket,userData,config))
         
         socket.on('disconnect',()=>disconnectUser(socket));
 
@@ -105,7 +104,7 @@ async function disconnectUser(socket){
 /////////////////////// AUTHENTICATE THE USER ///////////////////////////////////
 
 async function authenticateUser(socket, userData, config){ 
-    let playerData = await DatabaseHandler.FindPlayer(userData.userName)// Checks for playerdata
+    let playerData = await DatabaseHandler.findPlayer(userData.userName)// Checks for playerdata
     let authorized = false;
     let keyIdRaw = '';
     
@@ -139,11 +138,11 @@ async function registerUser(userData, config){
     keyIdRaw = KeyGen(); 
     
     // encrypts the key into a hash
-    var keyId = await KeyEncrypt.generateHashAsync(keyIdRaw);
-    data.keyId = keyId;
+    var keyId = await KeyEncrypt.generateHashAsync(config,keyIdRaw);
+    userData.keyId = keyId;
     
     // add player to database
-    var player = new Player();
+    var player = PlayerHandler.addPlayer(userData.userName);
     player.setUserName(userData.userName);
     player.setKeyId(keyId);
 

@@ -2,7 +2,7 @@
 
     "PORT":52300,
     "Host":"Heroku",
-    
+
     "Rooms":["Bengal Cat"],
     "Tickets":{"Bronze":4,"Silver":2},
 
@@ -13,8 +13,7 @@
 
     "Database":"Mongo",
     "DatabaseName":"lpso_game",
-    "DBUri":"mongodb://localhost:27017",
-    "SaltRounds":10,
-    "DBOptions":{"auth.user":"admin","auth.password":"admin"}
+    "DBUri":"mongodb://admin:admin@localhost:27017/?authSource=admin&readPreference=primary&appname=MongoDB%20Compass&ssl=false",
+    "SaltRounds":10
 
 }

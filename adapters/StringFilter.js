@@ -25,7 +25,7 @@ module.exports.filterName = function(str,maxLength){
     if(str.length<4) throw 6;
 
     // check for any bad words
-    if(filter.isProfane(str)) throw 7;
+    if(blFilter.isProfane(str)) throw 7;
 }
 
 // uses whitelist
@@ -50,11 +50,7 @@ module.exports.filterMessage= function(str,maxLength){
 
         // filter with blacklist
         case "Blacklist":
-            if(filter.isProfane(str)) throw "Inappropriate Message";
+            if(blFilter.isProfane(str)) throw "Inappropriate Message";
             break;
     }
-
-
-    
-    
 }

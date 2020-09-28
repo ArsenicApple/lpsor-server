@@ -6,6 +6,7 @@ module.exports.players = playerCache;
 module.exports.addPlayer = function(userName){
     player = new Player();
     playerCache[userName] = player;
+    return player;
 }
 
 module.exports.loadPlayer = function(userName, playerData){
