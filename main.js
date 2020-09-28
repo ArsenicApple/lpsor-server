@@ -24,9 +24,9 @@ manageSockets(config,io);
 
 // http get request asking if the server is there
 
-server.on('request', (request, response) => {
+server.on('request', async function(request, response){
     response.writeHead(200);// the same kind of magic happens here!
-    response.end("looks like you've entered the wrong uri. please retype");
+    response.end();
   });
 
 // server is ready
