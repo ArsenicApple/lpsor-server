@@ -1,0 +1,18 @@
+{
+
+    "PORT":52300,
+
+    "Rooms":["Bengal Cat"],
+    "Tickets":{"Bronze":4,"Silver":2},
+
+    "UserNameMaxChars":20,
+    "CharNameMaxChars":15,
+    "ChatMaxChars":40,
+    "ChatFilter": "None",
+
+    "Database":"Mongo",
+    "DatabaseName":"lpso_game",
+    "DBUri":"mongodb://localhost:27017",
+    "SaltRounds":10,
+    "DBOptions":{"auth.user":"admin","auth.password":"admin"}
+}

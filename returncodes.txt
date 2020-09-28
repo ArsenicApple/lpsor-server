@@ -1,0 +1,8 @@
+0 = success
+1 = userauthen failure, no keyid 
+2 = userathen failure, keyid does not match stored hash
+3 = 
+4 = register failure, there is a keyid when there isnt supposed to be one
+5 = name length too long
+6 = name length too short
+7 = name too inappropriate
