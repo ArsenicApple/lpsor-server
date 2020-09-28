@@ -31,7 +31,11 @@ server.on('request', async function(request, response){
 
 // server is ready
 console.log('Server has started. Listening on port '+PORT);
-var Console = new CommandShell();
+
+// for some reason heroku crashes the server when i use readline
+if(config.Host!="Heroku"){
+    var Console = new CommandShell();
+}
 
 ////////////////////////////////////////////////////////////
 //const http = require('http');

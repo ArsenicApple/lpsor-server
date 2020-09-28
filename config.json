@@ -1,7 +1,8 @@
 {
 
     "PORT":52300,
-
+    "Host":"Heroku",
+    
     "Rooms":["Bengal Cat"],
     "Tickets":{"Bronze":4,"Silver":2},
 
@@ -15,4 +16,5 @@
     "DBUri":"mongodb://localhost:27017",
     "SaltRounds":10,
     "DBOptions":{"auth.user":"admin","auth.password":"admin"}
+
 }
