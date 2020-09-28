@@ -1,6 +1,5 @@
 #! /bin/bash
 
-read -p "Commit message: " COMMITMESSAGE
 git add .
-git commit -m COMMITMESSAGE
+git commit
 git push heroku master

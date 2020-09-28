@@ -7,8 +7,8 @@ const configFile = fs.readFileSync('config.json');
 const config = JSON.parse(configFile);
 
 // start the HTTP server
-const http2 = require('http2');
-const server = http2.createServer()
+const http = require('http');
+const server = http.createServer()
 
 // start socket.io using the server port
 const PORT = process.env.PORT || config.PORT;
@@ -26,7 +26,7 @@ manageSockets(config,io);
 
 server.on('request', async function(request, response){
     response.writeHead(200);// the same kind of magic happens here!
-    response.end();
+    response.end("huhu looks like u typed in the wrong uri :)");
   });
 
 // server is ready
