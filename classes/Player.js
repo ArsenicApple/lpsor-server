@@ -8,7 +8,7 @@ module.exports = class Player {
         this.bronze = 0;
         this.silver = 0;
     }
-    loadCharacter(userData){
+    loadPlayer(userData){
         this.userName = userData.userName;
         this.userId = userData._id;
         this.keyId = userData.keyId;

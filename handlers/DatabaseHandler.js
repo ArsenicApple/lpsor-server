@@ -8,17 +8,19 @@ module.exports.initialize = function initialize(conf)
 async function mongoCollectionQueryAsync(data,collectionName,callbackFuncAsync){
     var mongoUri = config.DBUri;
     const MongoClient = require('mongodb').MongoClient;
-    
-    MongoClient.connect(mongoUri,async function(err, mongodb) {
-        if (err) throw err;
+    var result;
 
-        var db = mongodb.db(config.DatabaseName);
+    try{
+        var mongoclient = await MongoClient.connect(mongoUri)
+        var db = mongoclient.db(config.DatabaseName);
         const collection = db.collection(collectionName);
         result = await callbackFuncAsync(data,collection);
-        
-        mongodb.close();
-    }); 
-    
+        mongoclient.close();
+    }
+    catch(err){
+        console.log(`Error in mongo query: ${err}`);
+    }
+    return result;
 }
 
 ////////////////////////////////////////////////Player Database//////////////////////////////////////////////
@@ -35,7 +37,7 @@ module.exports.findPlayer = function(data){
 async function mongoGetPlayerDataAsync(data,collection){
     let find = false;
     try{
-        find = await collection.findOne({'userName': data.userName});
+        find = await collection.findOne({'userName': data});
     }
     catch(exception)
     {

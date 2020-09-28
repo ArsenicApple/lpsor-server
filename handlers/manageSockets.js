@@ -105,8 +105,6 @@ async function disconnectUser(socket){
 
 async function authenticateUser(socket, userData, config){ 
     let playerData = await DatabaseHandler.findPlayer(userData.userName)// Checks for playerdata
-    let authorized = false;
-    let keyIdRaw = '';
     
     try{
         // Authentication
@@ -114,10 +112,11 @@ async function authenticateUser(socket, userData, config){
             authenUser(userData);
         }
         else{// generating a new key + adding a player to the database
-            playerData = registerUser(userData, config);
+            playerData = await registerUser(userData, config);
         }
+        
         // finally integrating the player if there's no problems
-        addUser(socket,playerData);
+        addUser(socket,userData,playerData);
     }
     catch(errCode){
         socket.emit('authenSuccess',{"returnCode":errCode});
@@ -138,14 +137,15 @@ async function registerUser(userData, config){
     keyIdRaw = KeyGen(); 
     
     // encrypts the key into a hash
+    
     var keyId = await KeyEncrypt.generateHashAsync(config,keyIdRaw);
     userData.keyId = keyId;
+    
     
     // add player to database
     var player = PlayerHandler.addPlayer(userData.userName);
     player.setUserName(userData.userName);
     player.setKeyId(keyId);
-
     playerData = await DatabaseHandler.addPlayer(player);
     return playerData;
 }
@@ -166,12 +166,12 @@ function addUser(socket, userData, playerData){
 
     // add player to session
     PlayerHandler.addPlayer(userData.userName);
-    PlayerHandler.loadPlayer(userData.userName);
+    PlayerHandler.loadPlayer(userData.userName,playerData);
+    
     sockets[socket] = userData.userName;   
 
     // get rooms
-    var roomData = roomHandler.rooms;
-    
+    var roomData = RoomHandler.rooms;
     //success msg
     console.log(`User ${userData.userName} has connected to the server.`);
     socket.emit('authenSuccess',{'returnCode':0,'playerData':playerData,'keyId':keyIdRaw,'rooms':roomData}); 

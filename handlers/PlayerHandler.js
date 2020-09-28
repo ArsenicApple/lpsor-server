@@ -10,7 +10,7 @@ module.exports.addPlayer = function(userName){
 }
 
 module.exports.loadPlayer = function(userName, playerData){
-    playerCache[userName].LoadPlayerData(playerData);
+    playerCache[userName].loadPlayer(playerData);
 }
 
 module.exports.getPlayer = function(userName){
