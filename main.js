@@ -31,7 +31,7 @@ server.on('request', async function(request, response){
 
 // server is ready
 console.log('Server has started. Listening on port '+PORT);
-//var Console = new CommandShell();
+var Console = new CommandShell();
 
 ////////////////////////////////////////////////////////////
 //const http = require('http');
