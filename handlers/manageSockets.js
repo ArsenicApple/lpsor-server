@@ -85,6 +85,7 @@ function checkHasItem(userName,itemId){
 /////////////////////// DISCONNECT THE USER /////////////////////////////////////
 
 async function disconnectUser(socket){
+
     var userName = getUserName(socket);
     // saving + removing player
     var player = PlayerHandler.getPlayer(userName);
@@ -105,7 +106,7 @@ async function disconnectUser(socket){
 
 async function authenticateUser(socket, userData, config){ 
     let playerData = await DatabaseHandler.findPlayer(userData.userName)// Checks for playerdata
-    
+    console.log("attempting to connect "+userData);  
     try{
         // Authentication
         if(playerData){ // if playerdata returns an object without errors
