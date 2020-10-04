@@ -1,0 +1,19 @@
+{
+
+    "PORT":52300,
+    "Host":"Heroku",
+
+    "Rooms":["Bengal Cat"],
+    "Tickets":{"Bronze":4,"Silver":2},
+
+    "UserNameMaxChars":20,
+    "CharNameMaxChars":15,
+    "ChatMaxChars":40,
+    "ChatFilter": "None",
+
+    "Database":"Mongo",
+    "DatabaseName":"lpso_game",
+    "DBUri":"mongodb+srv://nickadmin:403mydeadstar@cluster0.n670q.azure.mongodb.net/test?authSource=admin&replicaSet=atlas-va2xst-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true",
+    "SaltRounds":10
+
+}
