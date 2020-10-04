@@ -13,7 +13,7 @@
 
     "Database":"Mongo",
     "DatabaseName":"lpsor_game",
-    "DBUri":"mongodb+srv://nickadmin:403mydeadstar@cluster0.n670q.azure.mongodb.net/test?authSource=admin&replicaSet=atlas-va2xst-shard-0&readPreference=primary&appname=MongoDB%20Compass&ssl=true",
+    "DBUri":"mongodb+srv://nickadmin:403mydeadstar@cluster0.n670q.azure.mongodb.net/lpsor_game?retryWrites=true&w=majority",
     "SaltRounds":10
 
 }
