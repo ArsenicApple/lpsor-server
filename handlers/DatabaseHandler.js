@@ -9,19 +9,21 @@ async function mongoCollectionQueryAsync(data,collectionName,callbackFuncAsync){
     var mongoUri = config.DBUri;
     const MongoClient = require('mongodb').MongoClient;
     var result;
-
+ 
     try{
-        var mongoclient = await MongoClient.connect(mongoUri)
-        var db = mongoclient.db(config.DatabaseName);
+        const client = new MongoClient(mongoUri, { useNewUrlParser: true });
+        await client.connect();
+        var db = client.db(config.DatabaseName);
         const collection = db.collection(collectionName);
         result = await callbackFuncAsync(data,collection);
-        mongoclient.close();
+        client.close();
     }
     catch(err){
         console.log(`Error in mongo query: ${err}`);
     }
     return result;
 }
+
 
 ////////////////////////////////////////////////Player Database//////////////////////////////////////////////
 // Checking for players
