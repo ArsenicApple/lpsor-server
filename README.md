@@ -6,10 +6,10 @@ A config.json file is generated when the server starts. You can edit it to suit 
 
 The server is built to only support MongoDB databases, but you can open the DatabaseHandler and add your own methods for the database and modify the config file
 
-Text filtering is possible with either Whitelist, Blacklist or None
-Whitelist filters based on the Whitelist.txt file
-Blacklist uses the bad-words package
-None doesn't filter text messages (names + usernames are filtered, however)
+Text filtering is possible with either Whitelist, Blacklist or None.
+Whitelist filters based on the Whitelist.txt file.
+Blacklist uses the bad-words package.
+None doesn't filter text messages (names + usernames are filtered, however).
 
 ## Config.json
 ### * PORT
