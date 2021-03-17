@@ -8,7 +8,7 @@ const PlayerHandler = require('../handlers/PlayerHandler.js');
 const CharacterHandler = require('../handlers/CharacterHandler.js');
 const RoomHandler = require('../handlers/RoomHandler.js');
 
-var sockets = [];
+var sockets = {};
 var io;
 
 module.exports = function manageSockets(config,socketio)
@@ -17,6 +17,7 @@ module.exports = function manageSockets(config,socketio)
     DatabaseHandler.initialize(config);
     StringFilter.initialize(config);
     RoomHandler.initialize(config);
+    PlayerHandler.initialize(config);
 
     io = socketio;
 
@@ -24,16 +25,21 @@ module.exports = function manageSockets(config,socketio)
     io.on('connection',function(socket){ 
         console.log('A player awaiting authentication has connected to the server.');
 
-        // User connecting with username and shortidKey
-        socket.on('userConnect',(userData)=> authenticateUser(socket,userData,config))
-        
+        // User connecting to the server + disconnecting
+        socket.on('userConnect',(userData)=> authenticateUser(socket,userData,config));
         socket.on('disconnect',()=>disconnectUser(socket));
 
-        // below are untested events
-        // User joining a world
-        socket.on('joinWorld',(userData)=> joinWorld(socket,userData))
+        // User requests room data
+        socket.on('getRooms',()=> getRooms(socket));
         
-        // User creating a character
+        // User requests to get all character data
+        socket.on('getAllCharacters',()=>getAllCharacters(socket));
+
+        // below are untested events
+        // User joining a map
+        socket.on('joinMap',(userData)=> joinMap(socket,userData))
+        
+        // User setting their current character
         socket.on('setCharacter',(userData)=> setPlayingCharacter(socket,userData))   
                 
         // User creating a character
@@ -41,7 +47,9 @@ module.exports = function manageSockets(config,socketio)
         
         // User sends message through chat
         socket.on('chat',(userData)=>sendChatMessage(socket,userData));
-        
+        // User gets chat filter data
+        socket.on('filterData',()=> getFilterData(socket));
+
         // Moving the character by changing their tile
         socket.on('moveTile',(userData) => moveCharacter(socket,userData));
 
@@ -66,7 +74,13 @@ module.exports = function manageSockets(config,socketio)
 /////////////////////// GENERAL FUNCTIONS ///////////////////////////////////
 
 function getUserName(socket){
-    return sockets[socket];
+    var find;
+    Object.keys(sockets).forEach(key=>{
+        if(sockets[key] == socket){
+            find = key
+        }
+    })
+    return find;
 }
 
 function checkHasItem(userName,itemId){
@@ -87,30 +101,36 @@ function checkHasItem(userName,itemId){
 async function disconnectUser(socket){
 
     var userName = getUserName(socket);
-    // saving + removing player
     var player = PlayerHandler.getPlayer(userName);
-    await DatabaseHandler.updatePlayer(player);
-    PlayerHandler.removePlayer(userName);
-    
+
     // saving + removing character data + room entry
     var character = CharacterHandler.getCharacter(userName);
     if(character){
         await DatabaseHandler.updateCharacter(character);
-        RoomHandler.removeCharacter(character.map);
+        RoomHandler.removeCharacter(player.room,userName);
         CharacterHandler.removeCharacter(userName);
-    } 
 
+        socket.to(player.getWorld()).emit('removePlayer',{returnCode:0,data:{userName:userName}})
+    } 
+    // announcing to server the player left
+
+    if(player)
+    {
+        await DatabaseHandler.updatePlayer(player);
+        PlayerHandler.removePlayer(userName);
+    }
+    
     console.log(`User ${userName} has disconnected from the server.`);
 }
 /////////////////////// AUTHENTICATE THE USER ///////////////////////////////////
 
 async function authenticateUser(socket, userData, config){ 
+    userData = JSON.parse(userData);
     let playerData = await DatabaseHandler.findPlayer(userData.userName)// Checks for playerdata
-    console.log("attempting to connect "+userData);  
     try{
         // Authentication
         if(playerData){ // if playerdata returns an object without errors
-            authenUser(userData);
+            authenUser(userData,playerData);
         }
         else{// generating a new key + adding a player to the database
             playerData = await registerUser(userData, config);
@@ -120,7 +140,10 @@ async function authenticateUser(socket, userData, config){
         addUser(socket,userData,playerData);
     }
     catch(errCode){
-        socket.emit('authenSuccess',{"returnCode":errCode});
+        
+        console.log("Failure in authen: " + errCode);
+        if(typeof errCode!="number") errCode = 4;
+        socket.emit('userConnect',{"returnCode":errCode});
     }
 
 }
@@ -144,21 +167,25 @@ async function registerUser(userData, config){
     
     
     // add player to database
-    var player = PlayerHandler.addPlayer(userData.userName);
-    player.setUserName(userData.userName);
-    player.setKeyId(keyId);
-    playerData = await DatabaseHandler.addPlayer(player);
+    var playerData = PlayerHandler.addPlayer(userData.userName);
+    playerData.setUserName(userData.userName);
+    playerData.setKeyId(keyId);
+    returnDB = await DatabaseHandler.addPlayer(playerData);
+
+    playerData._id = returnDB.insertedId;
+    playerData.keyIdRaw = keyIdRaw;
+
     return playerData;
 }
 
 
-function authenUser(userData){ // throws errors if failed authen
+function authenUser(userData,playerData){ // throws errors if failed authen
+    
     // checks if theres a valid key
     if(userData.keyId == ''){
         console.error('Could not authenticate user.');
         throw 1;
     }
-
     // checks if hashes match
     if(!KeyEncrypt.compareHashesAsync(userData.keyId,playerData.keyId)) throw 2;
 }
@@ -169,57 +196,85 @@ function addUser(socket, userData, playerData){
     PlayerHandler.addPlayer(userData.userName);
     PlayerHandler.loadPlayer(userData.userName,playerData);
     
-    sockets[socket] = userData.userName;   
-
-    // get rooms
-    var roomData = RoomHandler.rooms;
+    //sockets[socket] = userData.userName;   
+    sockets[userData.userName] = socket;
     //success msg
     console.log(`User ${userData.userName} has connected to the server.`);
-    socket.emit('authenSuccess',{'returnCode':0,'playerData':playerData,'keyId':keyIdRaw,'rooms':roomData}); 
+    socket.emit('userConnect',{'returnCode':0,'data':{'playerData':playerData,'keyId':playerData.keyIdRaw}}); 
+}
+
+/////////////////////// REQUESTING ALL CHARACTERS ///////////////////////////////////
+
+async function getAllCharacters(socket){
+    var userName = getUserName(socket);
+    var player = PlayerHandler.getPlayer(userName);
+
+    console.log(`Getting characters for ${userName}`)
+    var characters = await DatabaseHandler.getCharacters(player);
+    socket.emit('getAllCharacters',{returnCode:0,data:characters});
 }
 
 /////////////////////// PLAYER JOINS A ROOM ///////////////////////////////////
 
-function joinWorld(socket, userData){ 
+function getRooms(socket){
+    var roomData = RoomHandler.rooms;
+    socket.emit('getRooms',{'returnCode':0,'data':roomData}); 
+}
+
+function joinMap(socket, userData){ 
+    userData = JSON.parse(userData);
     var userName = getUserName(socket);
     var character = CharacterHandler.getCharacter(userName);
+    var player = PlayerHandler.getPlayer(userName);
 
     // Join the map
-    var map = data.roomName+"_"+data.mapName;
-    socket.join(map);
+    var world = userData.roomName+"_"+userData.mapName;
+
+    player.setWorld(userData.roomName,userData.mapName);
+    RoomHandler.addCharacter(userData.roomName,userName);
     
-    character.setMap(map);
 
-    // spawn all the characters in this room
-    CharacterHandler.characters.forEach(otherChara => { 
-        if (otherChara.room == map){
-            socket.emit('spawnCharacter',character);
-        }
-    })
-
-    // announce to others that currentCharacter has spawned
-    io.to(map).emit('spawnCharacter',currentCharacter); 
+    socket.join(player.getWorld(),()=>{
+         // spawn all the characters in this room
+        Object.values(PlayerHandler.players).forEach(otherPlayer => {
+            if (otherPlayer.getWorld() == world){
+                var otherUserName = otherPlayer.userName;
+                socket.emit('large cock');
+                socket.emit('spawnPlayer',{returnCode:0,data:{playerData:PlayerHandler.getFilteredPlayer(otherUserName),characterData:CharacterHandler.getCharacter(otherUserName)}}); 
+            }
+        })
+        socket.to(world).emit('large cock');
+        // announce to others that currentCharacter has spawned
+        socket.to(world).emit('spawnPlayer',{returnCode:0,data:{playerData:PlayerHandler.getFilteredPlayer(userName),characterData:character}}); 
+    });
 }
 
 async function setPlayingCharacter(socket,userData){
+    userData = JSON.parse(userData);
     var userName = getUserName(socket);
     // load character into room
-    var characterData = await DatabaseHandler.findOneCharacter(userData.charId);
-    var character = CharacterHandler.newCharacter(userName,characterData);
+    try{
+        var characterData = await DatabaseHandler.findCharacter(userData._id);
+        // if there's already a character
+        var loadedCharacter = CharacterHandler.getCharacter(userName)
+        if(loadedCharacter) {
+            await DatabaseHandler.updateCharacter(loadedCharacter);
+            CharacterHandler.removeCharacter(userName);
+        }
 
-    // if there's already a character
-    var loadedCharacter = CharacterHandler.getCharacter(userName)
-    if(loadedCharacter) {
-        await DatabaseHandler.updateCharacter(loadedCharacter);
-        CharacterHandler.removeCharacter(userName);
+        var character = CharacterHandler.newCharacter(userName,characterData);
+        CharacterHandler.loadCharacter(userName,character);
     }
-
-    CharacterHandler.loadCharacter(userName,character,characterData);
+    catch(err){
+        console.log(`Could not set current playing character for ${userName}: ${err}`);
+    }
 }
 
 /////////////////////// PLAYER CREATES A CHARACTER ///////////////////////////////////
 
 function createCharacter(socket,userData,config){
+    userData = JSON.parse(userData);
+    console.log(userData);
     var userName = getUserName(socket);
     try{
         // check if data is valid
@@ -227,16 +282,16 @@ function createCharacter(socket,userData,config){
         validateCharacter(userName,userData);
 
         // add character to database
-        var character = CharacterHandler.addCharacter(userName,userData);
+        var character = CharacterHandler.newCharacter(userName,userData);
         character.newAdoptDate();
         character.newFavouriteFood();
 
         DatabaseHandler.addCharacter(character);
     }
-    catch(errCode)
+    catch(err)
     {
-        console.error(`Cannot create character: code ${errCode}`);
-        socket.emit('authenSuccess',{"returnCode":errCode});  
+        console.error(`Cannot create character: code ${err}`);
+        socket.emit('authenSuccess',{"returnCode":err});  
     }
 }
 
@@ -252,40 +307,52 @@ function validateCharacter(userName,userData){
 
 /////////////////////// PLAYER CHAT ///////////////////////////////////
 
-function sendChatMessage(socket,userData){ 
+function sendChatMessage(socket,message){ 
     var userName = getUserName(socket);
-    var character = CharacterHandler.getCharacter(userName);
+    var player = PlayerHandler.getPlayer(userName);
     // try to filter chat, 
     try{
         // throws error if message is inappropriate
         StringFilter.filterMessage(userData.message);
 
         // emits to everyone so the filtered result is on everyone's client
-        io.to(character.map).emit('charChat',{"userName":userName,'message':userData.message});
+        io.to(player.getWorld()).emit('chat',{'returnCode':0,'data':{'userName':userName,'message':message}});
     }
     catch(error){
         console.log(`Failed to send message: ${error}`);
     }
     finally{
         // logs the message
-        console.log(`${userName}: ${userData.message}`);
+        console.log(`${userName}: ${message}`);
     }
 }  
+
+function getFilterData(socket){
+    console.log("Getting filter data");
+    socket.emit("filterData",{returnCode:0,data:StringFilter.getFilter()});
+}
 
 /////////////////////// CHARACTER TILE MOVEMENT ///////////////////////////////////
 
 function moveCharacter(socket,userData){
+    userData = JSON.parse(userData);
     var userName = getUserName(socket);
     var character = CharacterHandler.getCharacter(userName);
+    var player = PlayerHandler.getPlayer(userName);
 
-    io.to(character.map).emit('charMoveTile',{"userName":userName,'tile':userData.tile});
+    character.lastLocation = {x:userData.x,y:userData.y};
+    //console.log(socket.rooms);
+    socket.to(player.getWorld()).emit('large cock');
+    io.to(player.getWorld()).emit('moveTile',{'returnCode':0,'data':{"userName":userName,'tile':character.lastLocation}});
 }
+
 
 /////////////////////// CHARACTER ACTION ///////////////////////////////////
 
 function characterAction(socket,userData){ 
     var userName = getUserName(socket);
     var character = CharacterHandler.getCharacter(userName);
+
 
     io.to(character.map).emit('charPerformAction',{"userName":userName,'actionType':userData.actionType,'actionAnim':userData.actionAnim});
 }

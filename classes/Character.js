@@ -1,13 +1,13 @@
 module.exports = class Character {
     constructor(){
         this.userName = "";
-        this.charId = data._id;
         // sets the character's name
         this.name = "";
 
         // sets sprite data
         this.species = 0;
         this.subSpecies = 0;
+        this.lastLocation = {x:0,y:0};
         this.palette = []; // palette is based on the palette order in a species
         this.parts = [];
         this.gender = 0;
@@ -32,6 +32,7 @@ module.exports = class Character {
         this.palette = data.palette; // palette is based on the palette order in a species
         this.parts = data.parts;
         this.gender = data.gender;
+        this.lastLocation = data.lastLocation;
 
         // misc data
         this.adoptDate = data.adoptDate;
@@ -50,9 +51,6 @@ module.exports = class Character {
         this.health[0] = value[0];
         this.health[1] = value[1];
         this.health[2] = value[2];
-    }
-    setRoom(room){
-        this.map = map;
     }
 
     // Generate new values for Adoption date and favourite food

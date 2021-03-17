@@ -1,19 +1,19 @@
 {
-
-    "PORT":52300,
-    "Host":"Heroku",
-
-    "Rooms":["Bengal Cat"],
-    "Tickets":{"Bronze":4,"Silver":2},
-
-    "UserNameMaxChars":20,
-    "CharNameMaxChars":15,
-    "ChatMaxChars":40,
-    "ChatFilter": "None",
-
-    "Database":"Mongo",
-    "DatabaseName":"lpsor_game",
-    "DBUri":"mongodb+srv://nickadmin:403mydeadstar@cluster0.n670q.azure.mongodb.net/lpsor_game?retryWrites=true&w=majority",
-    "SaltRounds":10
-
+  "PORT": 52300,
+  "Host": "",
+  "Rooms": [
+    "Bengal Cat"
+  ],
+  "Tickets": {
+    "Bronze": 4,
+    "Silver": 2
+  },
+  "UserNameMaxChars": 20,
+  "CharNameMaxChars": 15,
+  "ChatMaxChars": 40,
+  "ChatFilter": "Blacklist",
+  "Database": "Mongo",
+  "DatabaseName": "lpsor_game",
+  "DBUri": "",
+  "SaltRounds": 10
 }

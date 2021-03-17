@@ -10,7 +10,7 @@ module.exports.initialize = function(config){
         var buddies = 0;
         var maxPopulation = 25;
         // room data
-        roomData[v] = { 'name':v.name,
+        roomData[i] = { 'name':v,
                         'population': 0,
                         'maxPopulation':maxPopulation,
                         'players': []
@@ -18,20 +18,32 @@ module.exports.initialize = function(config){
     });
 }
 
+function getRoom(name){
+    let room;
+    roomData.forEach(v=>{
+        if(v.name==name){ 
+            room = v;
+        }
+    });
+    return room;
+}
+
 // add a character to a room
 module.exports.addCharacter = function(roomName,userName){
-    roomData[roomName].population++;
-    roomData[roomName].players.push(userName);
+    let room = getRoom(roomName);
+    room.population++;
+    room.players.push(userName);
 }
 
 // removes character from room
 // set population to normal
 module.exports.removeCharacter = function(roomName,userName){
-    roomData[roomName].population--;
+    let room = getRoom(roomName);
+    room.population--;
  
-    var characterindex = roomData[roomName].players.indexOf(userName)
+    var characterindex = room.players.indexOf(userName);
     if(characterindex){
-        roomData[roomName].players[characterindex] = null;  
+        room.players[characterindex] = null;  
     }
     
 }

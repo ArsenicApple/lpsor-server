@@ -1,12 +1,12 @@
 module.exports = class Player {
-    constructor(userData){
+    constructor(config){
         this.userName = "";
         this.keyId = "";
         this.inventory = [];
         this.friends = [];
         this.kibble = 0;
-        this.bronze = 0;
-        this.silver = 0;
+        this.bronze = config.Tickets.Bronze;
+        this.silver = config.Tickets.Silver;
     }
     loadPlayer(userData){
         this.userName = userData.userName;
@@ -40,6 +40,13 @@ module.exports = class Player {
     }
     addKibble(kibble){
         this.kibble+=kibble;
+    }
+    setWorld(roomName,mapName){
+        this.room = roomName;
+        this.map = mapName;
+    }
+    getWorld(){
+        return this.room+"_"+this.map;
     }
 
 }

@@ -1,19 +1,22 @@
-const BadWordsFilter = require('bad-words');
+const bad_words = require('bad-words');
 const { characters } = require('shortid');
-const blFilter = new BadWordsFilter();
+const blackList = new bad_words({emptyList:true});
+const whiteList = new bad_words({emptyList:true})
 
-// get whitelist
-var whitelist;
+var blacklistWords = [];
+var whitelistWords = [];
+
 var ChatFilter;
 
 module.exports.initialize = function(config){
     ChatFilter = config.ChatFilter
-    
+
     // init whitelist
-    if(ChatFilter == "Whitelist"){
-        const fs = require('fs');
-        whitelist = fs.readFileSync('../Whitelist.txt').toString().split("\n");
-    }
+    const fs = require('fs');
+    blacklistWords = fs.readFileSync('./blacklist.txt').toString().split("\n");
+    whitelistWords = fs.readFileSync('./whitelist.txt').toString().split("\n");
+    blackList.addWords(...blacklistWords);
+    whiteList.addWords(...whitelistWords);
     
 }
 
@@ -25,32 +28,44 @@ module.exports.filterName = function(str,maxLength){
     if(str.length<4) throw 6;
 
     // check for any bad words
-    if(blFilter.isProfane(str)) throw 7;
+    if(blackList.isProfane(str)) throw 7;
+}
+
+// Returns the server's filter settings
+module.exports.getFilter = function(){
+    switch(ChatFilter)
+    {
+        case "Whitelist":
+            return {filterType:ChatFilter,filterWords:whitelistWords};
+        case "Blacklist":
+            return {filterType:ChatFilter,filterWords:blacklistWords};
+        case "None":
+            return {filterType:ChatFilter,filterWords:[]};
+    }
+    
 }
 
 // uses whitelist
 //filtermessage only throws an error to the console for the mods
-module.exports.filterMessage= function(str,maxLength){
+module.exports.filterMessage= function(message,maxLength){
     // checks for correct length
-    if(str.length>maxLength) throw "Message too long";
-
-
+    if(message.length>maxLength) throw "Message too long";
     switch(ChatFilter)
     {
         // filter with whitelist
         case "Whitelist":
             // splits message into words
-            var words = str.split(" ");
+            var words = message.split(" ");
 
             // checks if it's in the whitelist
             words.forEach(messageWord =>{
-                if(whitelist.find(whWord=> whWord==messageWord)) throw "Inappropriate Message";
+                if(!whiteList.isProfane(messageWord)) throw "Inappropriate Message";
             });
             break;
 
         // filter with blacklist
         case "Blacklist":
-            if(blFilter.isProfane(str)) throw "Inappropriate Message";
+            if(blackList.isProfane(message)) throw "Inappropriate Message";
             break;
     }
 }

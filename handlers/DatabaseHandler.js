@@ -1,3 +1,5 @@
+const { mongo } = require('mongoose');
+
 var config;
 // im so sorry to anyone who has to read this
 module.exports.initialize = function initialize(conf)
@@ -61,7 +63,7 @@ module.exports.addPlayer = function(data){
 async function mongoAddPlayerAsync(data,collection){
     let find = false;
     try{
-        collection.insertOne(data);
+        find = collection.insertOne(data);
     }
     catch(exception){
         console.error(`Error in adding player: ${exception}`);
@@ -95,6 +97,7 @@ async function mongoUpdatePlayerAsync(data,collection){
 // Adding a character
 
 module.exports.addCharacter = function(data){
+    console.log(1);
     switch(config.Database){
         case 'Mongo':
             mongoCollectionQueryAsync(data,'characters',mongoAddCharacterAsync);
@@ -103,6 +106,7 @@ module.exports.addCharacter = function(data){
 }
 async function mongoAddCharacterAsync(data,collection){
     try{
+        console.log(data);
         collection.insertOne(data);
     }
     catch(exception){
@@ -141,6 +145,7 @@ module.exports.findCharacter = function(data){
     // sets database based on what the server preferences allow. note to add support for custom db or mysql
     switch(config.Database){
         case 'Mongo':
+            
             return mongoCollectionQueryAsync(data,'characters',mongoFindOneCharacterAsync);
         default: 
     }
@@ -149,7 +154,8 @@ module.exports.findCharacter = function(data){
 async function mongoFindOneCharacterAsync(charId,collection){
     let find = false;
     try{
-        find = await collection.find({'_id': charId});
+        var searchCursor = await collection.findOne({'_id': mongo.ObjectID(charId)});
+        find = searchCursor;
     }
     catch(exception){
         console.error(`Error: ${exception}`);
@@ -171,7 +177,7 @@ module.exports.updateCharacter = function(data){
 
 async function mongoUpdateCharacterAsync(data,collection){
     try{
-        await collection.updateOne({'_id': data.charId},data);
+        await collection.updateOne({'_id': data.charId},{$set:data});
     }
     catch(exception){
         console.error(`Error: ${exception}`);

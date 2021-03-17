@@ -1,6 +1,6 @@
 const Character = require('../classes/Character.js');
 
-var characterCache = [];
+var characterCache = {};
 module.exports.characters = characterCache;
 
 module.exports.newCharacter = function(userName,characterData){
