@@ -1,4 +1,4 @@
- #LPSOR server
+ # LPSOR server
  
 Server source code for LPSOr, using node.js and socket.io websockets.
 Currently, it's configured to use MongoDB as a database. 
@@ -11,7 +11,7 @@ Whitelist filters based on the Whitelist.txt file
 Blacklist uses the bad-words package
 None doesn't filter text messages (names + usernames are filtered, however)
 
-##Config.json
+## Config.json
 1. PORT
 The opened by the server. Defaults to 52300. Do note that port forwarding can be dangerous, so make sure you're using a host or the machine you're on is in a DMZ.
 2. Console
